@@ -1,4 +1,4 @@
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 import requests
 
 
@@ -16,9 +16,11 @@ class Parser:
         :return: словарь с контактами организации
         """
         telephones = list(map(lambda x: x.get_text(), list(soup.h1.find_all('a'))))
-
+        email, site = list(map(lambda x: x.get_text(), soup.find_all(target="_blank")))
         contacts = {
-            'telephones': telephones
+            'telephones': telephones,
+            'email': email,
+            'site': site
         }
         return contacts
 
