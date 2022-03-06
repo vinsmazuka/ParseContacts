@@ -1,5 +1,5 @@
-import requests
 from bs4 import BeautifulSoup
+import requests
 
 
 class Parser:
@@ -16,6 +16,7 @@ class Parser:
         :return: словарь с контактами организации
         """
         telephones = list(map(lambda x: x.get_text(), list(soup.h1.find_all('a'))))
+
         contacts = {
             'telephones': telephones
         }
