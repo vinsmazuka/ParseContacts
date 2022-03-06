@@ -14,11 +14,13 @@ class Parser:
         """
         предназначен для вычленения контактных данных организации из html страницы
         :param soup: class 'bs4.BeautifulSoup'
-        :return: словарь с контактами организации
+        :return: словарь с контактами организации(тип- dict)
         """
-        telephones_list = list(map(lambda x: x.get_text(), list(soup.h1.find_all('a'))))
+        telephones_list = list(map(lambda x: x.get_text(),
+                                   list(soup.h1.find_all('a'))))
         telephones = ",".join(telephones_list)
-        email_or_site = list(map(lambda x: x.get_text(), soup.find_all(target="_blank")))
+        email_or_site = list(map(lambda x: x.get_text(),
+                                 soup.find_all(target="_blank")))
         if len(email_or_site) == 0:
             email = ''
             site = ''
@@ -92,7 +94,13 @@ def excheck_pro_handler():
 
 
 def find_org_com_handler():
-    organizations = pandas.read_excel('empty_values — копия (2).xlsx')
+    """
+    парсит файл эксель,
+    парсит сайт find-org.com по инн организаций из файла
+    и добавляет в файл контактные данные организации c сайта
+    :return: none
+    """
+    organizations = pandas.read_excel('organizations.xlsx')
     found_telephones = []
     found_sites = []
     counter = 0
@@ -109,7 +117,7 @@ def find_org_com_handler():
         print(counter)
     organizations['telephone'] = found_telephones
     organizations['site'] = found_sites
-    organizations.to_excel('empty_values — копия (2).xlsx')
+    organizations.to_excel('organizations.xlsx')
 
 
 if __name__ == "__main__":
