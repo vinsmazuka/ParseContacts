@@ -10,7 +10,7 @@ class Parser:
     pass
 
     @classmethod
-    def parse_contacts(cls, soup):
+    def parse_excheck_pro(cls, soup):
         """
         предназначен для вычленения контактных данных организации из html страницы
         :param soup: class 'bs4.BeautifulSoup'
@@ -38,12 +38,37 @@ class Parser:
         }
         return contacts
 
+    @classmethod
+    def parse_find_org_com(cls, soup):
+        """
+        предназначен для вычленения контактных данных организации из html страницы
+        :param soup: class 'bs4.BeautifulSoup'
+        :return: словарь с контактами организации(тип- dict)
+        """
+        try:
+            element1 = soup.find(text='Телефон(ы): ').parent
+            unuseful_text = element1.get_text()
+            telephones = element1.parent.get_text()[len(unuseful_text):]
+        except AttributeError:
+            telephones = ''
+        try:
+            element2 = soup.find(text='Сайт: ').parent
+            unuseful_text = element2.get_text()
+            site = element2.parent.get_text()[len(unuseful_text):]
+        except AttributeError:
+            site = ''
+        contacts = {
+            'telephones': telephones,
+            'site': site,
+        }
+        return contacts
 
-def main():
+
+def excheck_pro_handler():
     """
     парсит файл эксель,
-    парсит сайт по инн организаций из файла
-    и добавляет в файл контактные данные организации
+    парсит сайт excheck.pro по инн организаций из файла
+    и добавляет в файл контактные данные организации c сайта
     :return: none
     """
     organizations = pandas.read_excel('organizations.xlsx')
@@ -54,7 +79,7 @@ def main():
     for inn in list(organizations['ИНН']):
         response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
         new_soup = BeautifulSoup(response.text, 'html.parser')
-        result = Parser.parse_contacts(soup=new_soup)
+        result = Parser.parse_excheck_pro(soup=new_soup)
         found_telephones.append(result['telephones'])
         found_emails.append(result['email'])
         found_sites.append(result['site'])
@@ -66,9 +91,32 @@ def main():
     organizations.to_excel('organizations.xlsx')
 
 
+def find_org_com_handler():
+    organizations = pandas.read_excel('empty_values — копия (2).xlsx')
+    found_telephones = []
+    found_sites = []
+    counter = 0
+    for inn in list(organizations['ИНН']):
+        response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
+        soup = BeautifulSoup(response.text, 'html.parser')
+        link = 'https://www.find-org.com/' + soup.p.a.get('href')
+        new_response = requests.get(link)
+        new_soup = BeautifulSoup(new_response.text, 'html.parser')
+        result = Parser.parse_find_org_com(soup=new_soup)
+        found_telephones.append(result['telephones'])
+        found_sites.append(result['site'])
+        counter += 1
+        print(counter)
+    organizations['telephone'] = found_telephones
+    organizations['site'] = found_sites
+    organizations.to_excel('empty_values — копия (2).xlsx')
+
+
 if __name__ == "__main__":
-    main()
-# response = requests.get('https://www.find-org.com/cli/1376165_ooo_ic_sapr')
+    find_org_com_handler()
+
+
+
 
 
 
