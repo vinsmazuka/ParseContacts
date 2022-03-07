@@ -74,7 +74,7 @@ def excel_handler(func_to_deco, path):
     сайтов в файл эксель
     :param func_to_deco: функция-обработчик сайта
     :param path: путь к файлу, кот необходимо обработать(тип -str)
-    :return: функцию-обертку write
+    :return: функцию-обертку wrapper
     """
     def wrapper():
         def write():
@@ -89,7 +89,10 @@ def excel_handler(func_to_deco, path):
         organizations = pandas.read_excel(path)
         result = func_to_deco(organizations)
         organizations['telephone'] = result['found_telephones']
-        organizations['email'] = result['found_emails']
+        try:
+            organizations['email'] = result['found_emails']
+        except KeyError:
+            pass
         organizations['site'] = result['found_sites']
         write()
     return wrapper
@@ -97,7 +100,7 @@ def excel_handler(func_to_deco, path):
 
 def excheck_pro_handler(organizations):
     """
-    парсит сайт excheck.pro по инн организации
+    парсит сайт excheck.pro по инн организаций из файла
     :param organizations: объект класса pandas.DataFrame, содержащий
     информацию об организациях, в т.ч. их инн
     :return: словарь с контактными данными организаций(телефоны, email, сайт)
@@ -137,32 +140,48 @@ def excheck_pro_handler(organizations):
     return result
 
 
-def find_org_com_handler(path):
+def find_org_com_handler(organizations):
     """
-    парсит файл эксель,
     парсит сайт find-org.com по инн организаций из файла
-    и добавляет в файл контактные данные организации c сайта
-    :param path: путь к файлу, кот необходимо обработать(тип -str)
-    :return: none
+    :param organizations: объект класса pandas.DataFrame, содержащий
+    информацию об организациях, в т.ч. их инн
+    :return: словарь с контактными данными организаций(телефоны, сайт)
     """
-    organizations = pandas.read_excel(path)
     found_telephones = []
     found_sites = []
     counter = 0
     for inn in list(organizations['ИНН']):
-        response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
-        soup = BeautifulSoup(response.text, 'html.parser')
-        link = 'https://www.find-org.com/' + soup.p.a.get('href')
-        new_response = requests.get(link)
-        new_soup = BeautifulSoup(new_response.text, 'html.parser')
-        result = Parser.parse_find_org_com(soup=new_soup)
-        found_telephones.append(result['telephones'])
-        found_sites.append(result['site'])
-        counter += 1
-        print(counter)
-    organizations['telephone'] = found_telephones
-    organizations['site'] = found_sites
-    organizations.to_excel(path)
+        try:
+            response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
+            soup = BeautifulSoup(response.text, 'html.parser')
+            link = 'https://www.find-org.com/' + soup.p.a.get('href')
+        except AttributeError:
+            print('Сайт прервал обработку, необходимо зайти на сайт и ввести '
+                  'капчу,\nпосле ввода капчи обработка продолжится')
+            time.sleep(40)
+            response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
+            soup = BeautifulSoup(response.text, 'html.parser')
+            link = 'https://www.find-org.com/' + soup.p.a.get('href')
+            new_response = requests.get(link)
+            new_soup = BeautifulSoup(new_response.text, 'html.parser')
+            result = Parser.parse_find_org_com(soup=new_soup)
+            found_telephones.append(result['telephones'])
+            found_sites.append(result['site'])
+            counter += 1
+            print(f'количество обработанных строк: {counter}')
+        else:
+            new_response = requests.get(link)
+            new_soup = BeautifulSoup(new_response.text, 'html.parser')
+            result = Parser.parse_find_org_com(soup=new_soup)
+            found_telephones.append(result['telephones'])
+            found_sites.append(result['site'])
+            counter += 1
+            print(f'количество обработанных строк: {counter}')
+    result = {
+        'found_telephones': found_telephones,
+        'found_sites': found_sites
+    }
+    return result
 
 
 def sbis_ru_handler(path):
@@ -175,7 +194,7 @@ def sbis_ru_handler(path):
 
 
 if __name__ == "__main__":
-    excel_handler(excheck_pro_handler, 'organizations.xlsx')()
+    excel_handler(find_org_com_handler, 'organizations.xlsx')()
     # response = requests.get(f'https://sbis.ru/contragents/2724243851')
     # print(response.status_code)
 
