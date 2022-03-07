@@ -210,7 +210,7 @@ def find_org_com_handler(organizations):
     return result
 
 
-def sbis_ru_handler():
+def sbis_ru_handler(organizations):
     """
     парсит сайт sbis.ru по инн организаций из файла
     :param organizations: объект класса pandas.DataFrame, содержащий
@@ -220,17 +220,34 @@ def sbis_ru_handler():
     found_telephones = []
     found_emails = []
     found_sites = []
-    response = requests.get(f'https://sbis.ru/contragents/2722135674')
-    soup = BeautifulSoup(response.text, 'html.parser')
-    Parser.parse_sbis_ru(soup=soup)
-
+    counter = 0
+    for inn in list(organizations['ИНН']):
+        while True:
+            try:
+                response = requests.get(f'https://sbis.ru/contragents/{inn}')
+            except requests.exceptions.ConnectionError:
+                print('запрос не прошел')
+                time.sleep(10)
+            else:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                parsing_results = Parser.parse_sbis_ru(soup=soup)
+                found_telephones.append(parsing_results['telephones'])
+                found_emails.append(parsing_results['email'])
+                found_sites.append(parsing_results['site'])
+                counter += 1
+                print(f'количество обработанных строк: {counter}')
+                break
+    result = {
+        'found_telephones': found_telephones,
+        'found_emails': found_emails,
+        'found_sites': found_sites
+    }
+    return result
 
 
 if __name__ == "__main__":
-    sbis_ru_handler()
-    # excel_handler(find_org_com_handler, 'organizations.xlsx')()
-    # response = requests.get(f'https://sbis.ru/contragents/2724243851')
-    # print(response.status_code)
+    excel_handler(sbis_ru_handler, 'empty_values.xlsx')()
+
 
 
 
