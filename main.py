@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import pandas
 import requests
+import time
 
 
 class Parser:
@@ -66,32 +67,74 @@ class Parser:
         return contacts
 
 
-def excheck_pro_handler(path):
+def excel_handler(func_to_deco, path):
     """
-    парсит файл эксель,
-    парсит сайт excheck.pro по инн организаций из файла
-    и добавляет в файл контактные данные организации c сайта
+    Читает данные из файла эксель,
+    сохраняет результаты работы функций-обработчиков
+    сайтов в файл эксель
+    :param func_to_deco: функция-обработчик сайта
     :param path: путь к файлу, кот необходимо обработать(тип -str)
-    :return: none
+    :return: функцию-обертку write
     """
-    organizations = pandas.read_excel(path)
+    def wrapper():
+        def write():
+            try:
+                organizations.to_excel(path)
+                print('Данные были записаны в файл')
+            except PermissionError:
+                print('Данные не были записаны, так как файл был открыт '
+                      'закроте файл')
+                time.sleep(5)
+                return write()
+        organizations = pandas.read_excel(path)
+        result = func_to_deco(organizations)
+        organizations['telephone'] = result['found_telephones']
+        organizations['email'] = result['found_emails']
+        organizations['site'] = result['found_sites']
+        write()
+    return wrapper
+
+
+def excheck_pro_handler(organizations):
+    """
+    парсит сайт excheck.pro по инн организации
+    :param organizations: объект класса pandas.DataFrame, содержащий
+    информацию об организациях, в т.ч. их инн
+    :return: словарь с контактными данными организаций(телефоны, email, сайт)
+    """
     found_telephones = []
     found_emails = []
     found_sites = []
     counter = 0
     for inn in list(organizations['ИНН']):
-        response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
-        new_soup = BeautifulSoup(response.text, 'html.parser')
-        result = Parser.parse_excheck_pro(soup=new_soup)
-        found_telephones.append(result['telephones'])
-        found_emails.append(result['email'])
-        found_sites.append(result['site'])
-        counter += 1
-        print(counter)
-    organizations['telephone'] = found_telephones
-    organizations['email'] = found_emails
-    organizations['site'] = found_sites
-    organizations.to_excel(path)
+        try:
+            response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
+        except requests.exceptions.ConnectionError:
+            print('Произошла ошибка соединения, ожидайте')
+            time.sleep(10)
+            response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
+            print('Соединение было восстановлено')
+            new_soup = BeautifulSoup(response.text, 'html.parser')
+            parsing_results = Parser.parse_excheck_pro(soup=new_soup)
+            found_telephones.append(parsing_results['telephones'])
+            found_emails.append(parsing_results['email'])
+            found_sites.append(parsing_results['site'])
+            counter += 1
+            print(f'количество обработанных строк: {counter}')
+        else:
+            new_soup = BeautifulSoup(response.text, 'html.parser')
+            parsing_results = Parser.parse_excheck_pro(soup=new_soup)
+            found_telephones.append(parsing_results['telephones'])
+            found_emails.append(parsing_results['email'])
+            found_sites.append(parsing_results['site'])
+            counter += 1
+            print(f'количество обработанных строк: {counter}')
+    result = {
+        'found_telephones': found_telephones,
+        'found_emails': found_emails,
+        'found_sites': found_sites
+    }
+    return result
 
 
 def find_org_com_handler(path):
@@ -122,9 +165,19 @@ def find_org_com_handler(path):
     organizations.to_excel(path)
 
 
+def sbis_ru_handler(path):
+    """
+    парсит сайт find-org.com по инн организаций из файла
+    и добавляет в файл контактные данные организации c сайта
+    :param path: путь к файлу, кот необходимо обработать(тип -str)
+    :return: none
+    """
+
+
 if __name__ == "__main__":
-    response = requests.get(f'https://sbis.ru/contragents/2724243851')
-    print(response.status_code)
+    excel_handler(excheck_pro_handler, 'organizations.xlsx')()
+    # response = requests.get(f'https://sbis.ru/contragents/2724243851')
+    # print(response.status_code)
 
 
 
