@@ -13,8 +13,9 @@ class Parser:
     @classmethod
     def parse_excheck_pro(cls, soup):
         """
-        предназначен для вычленения контактных данных организации из html страницы
-        :param soup: class 'bs4.BeautifulSoup'
+        предназначен для вычленения контактных данных организации из
+        html-кода страницы сайта excheck.pro
+        :param soup: class 'bs4.BeautifulSoup', содержащий html-код страницы
         :return: словарь с контактами организации(тип- dict)
         """
         telephones_list = list(map(lambda x: x.get_text(),
@@ -44,8 +45,9 @@ class Parser:
     @classmethod
     def parse_find_org_com(cls, soup):
         """
-        предназначен для вычленения контактных данных организации из html страницы
-        :param soup: class 'bs4.BeautifulSoup'
+        предназначен для вычленения контактных данных организации из
+        html-кода страницы сайта find-org.com
+        :param soup: class 'bs4.BeautifulSoup', содержащий html-код страницы
         :return: словарь с контактами организации(тип- dict)
         """
         try:
@@ -69,8 +71,9 @@ class Parser:
     @classmethod
     def parse_sbis_ru(cls, soup):
         """
-        предназначен для вычленения контактных данных организации из html страницы
-        :param soup: class 'bs4.BeautifulSoup'
+        предназначен для вычленения контактных данных организации из
+        html-кода страницы сайта sbis.ru
+        :param soup: class 'bs4.BeautifulSoup', содержащий html-код страницы
         :return: словарь с контактами организации(тип- dict)
         """
         try:
@@ -104,6 +107,9 @@ def excel_handler(func_to_deco, path):
     """
     def wrapper():
         def write():
+            """
+            записывает данные в файл эксель
+            """
             try:
                 organizations.to_excel(path)
                 print('Данные были записаны в файл')
