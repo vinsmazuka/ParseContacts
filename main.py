@@ -66,6 +66,32 @@ class Parser:
         }
         return contacts
 
+    @classmethod
+    def parse_sbis_ru(cls, soup):
+        """
+        предназначен для вычленения контактных данных организации из html страницы
+        :param soup: class 'bs4.BeautifulSoup'
+        :return: словарь с контактами организации(тип- dict)
+        """
+        try:
+            telephones = soup.find(itemprop="telephone").get_text()
+        except AttributeError:
+            telephones = ''
+        try:
+            email = soup.find(itemprop="email").get_text()
+        except AttributeError:
+            email = ''
+        try:
+            site = soup.find(itemprop="url").get_text()
+        except AttributeError:
+            site = ''
+        contacts = {
+            'telephones': telephones,
+            'email': email,
+            'site': site
+        }
+        return contacts
+
 
 def excel_handler(func_to_deco, path):
     """
@@ -184,17 +210,25 @@ def find_org_com_handler(organizations):
     return result
 
 
-def sbis_ru_handler(path):
+def sbis_ru_handler():
     """
-    парсит сайт find-org.com по инн организаций из файла
-    и добавляет в файл контактные данные организации c сайта
-    :param path: путь к файлу, кот необходимо обработать(тип -str)
-    :return: none
+    парсит сайт sbis.ru по инн организаций из файла
+    :param organizations: объект класса pandas.DataFrame, содержащий
+    информацию об организациях, в т.ч. их инн
+    :return: словарь с контактными данными организаций(телефоны, email, сайт)
     """
+    found_telephones = []
+    found_emails = []
+    found_sites = []
+    response = requests.get(f'https://sbis.ru/contragents/2722135674')
+    soup = BeautifulSoup(response.text, 'html.parser')
+    Parser.parse_sbis_ru(soup=soup)
+
 
 
 if __name__ == "__main__":
-    excel_handler(find_org_com_handler, 'organizations.xlsx')()
+    sbis_ru_handler()
+    # excel_handler(find_org_com_handler, 'organizations.xlsx')()
     # response = requests.get(f'https://sbis.ru/contragents/2724243851')
     # print(response.status_code)
 
