@@ -66,14 +66,15 @@ class Parser:
         return contacts
 
 
-def excheck_pro_handler():
+def excheck_pro_handler(path):
     """
     парсит файл эксель,
     парсит сайт excheck.pro по инн организаций из файла
     и добавляет в файл контактные данные организации c сайта
+    :param path: путь к файлу, кот необходимо обработать(тип -str)
     :return: none
     """
-    organizations = pandas.read_excel('organizations.xlsx')
+    organizations = pandas.read_excel(path)
     found_telephones = []
     found_emails = []
     found_sites = []
@@ -90,17 +91,18 @@ def excheck_pro_handler():
     organizations['telephone'] = found_telephones
     organizations['email'] = found_emails
     organizations['site'] = found_sites
-    organizations.to_excel('organizations.xlsx')
+    organizations.to_excel(path)
 
 
-def find_org_com_handler():
+def find_org_com_handler(path):
     """
     парсит файл эксель,
     парсит сайт find-org.com по инн организаций из файла
     и добавляет в файл контактные данные организации c сайта
+    :param path: путь к файлу, кот необходимо обработать(тип -str)
     :return: none
     """
-    organizations = pandas.read_excel('organizations.xlsx')
+    organizations = pandas.read_excel(path)
     found_telephones = []
     found_sites = []
     counter = 0
@@ -117,11 +119,12 @@ def find_org_com_handler():
         print(counter)
     organizations['telephone'] = found_telephones
     organizations['site'] = found_sites
-    organizations.to_excel('organizations.xlsx')
+    organizations.to_excel(path)
 
 
 if __name__ == "__main__":
-    find_org_com_handler()
+    response = requests.get(f'https://sbis.ru/contragents/2724243851')
+    print(response.status_code)
 
 
 
