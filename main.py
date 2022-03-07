@@ -196,17 +196,17 @@ def find_org_com_handler(organizations):
             link = 'https://www.find-org.com/' + soup.p.a.get('href')
             new_response = requests.get(link)
             new_soup = BeautifulSoup(new_response.text, 'html.parser')
-            result = Parser.parse_find_org_com(soup=new_soup)
-            found_telephones.append(result['telephones'])
-            found_sites.append(result['site'])
+            parsing_results = Parser.parse_find_org_com(soup=new_soup)
+            found_telephones.append(parsing_results['telephones'])
+            found_sites.append(parsing_results['site'])
             counter += 1
             print(f'количество обработанных строк: {counter}')
         else:
             new_response = requests.get(link)
             new_soup = BeautifulSoup(new_response.text, 'html.parser')
-            result = Parser.parse_find_org_com(soup=new_soup)
-            found_telephones.append(result['telephones'])
-            found_sites.append(result['site'])
+            parsing_results = Parser.parse_find_org_com(soup=new_soup)
+            found_telephones.append(parsing_results['telephones'])
+            found_sites.append(parsing_results['site'])
             counter += 1
             print(f'количество обработанных строк: {counter}')
     result = {
