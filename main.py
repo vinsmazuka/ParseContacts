@@ -132,7 +132,8 @@ def excel_handler(func_to_deco, path):
 
 def excheck_pro_handler(organizations):
     """
-    парсит сайт excheck.pro по инн организаций из файла
+    парсит сайт excheck.pro по инн организаций из
+    переменной organizations
     :param organizations: объект класса pandas.DataFrame, содержащий
     информацию об организациях, в т.ч. их инн
     :return: словарь с контактными данными организаций(телефоны, email, сайт)
@@ -174,7 +175,8 @@ def excheck_pro_handler(organizations):
 
 def find_org_com_handler(organizations):
     """
-    парсит сайт find-org.com по инн организаций из файла
+    парсит сайт find-org.com по инн организаций
+    из переменной organizations
     :param organizations: объект класса pandas.DataFrame, содержащий
     информацию об организациях, в т.ч. их инн
     :return: словарь с контактными данными организаций(телефоны, сайт)
@@ -218,7 +220,8 @@ def find_org_com_handler(organizations):
 
 def sbis_ru_handler(organizations):
     """
-    парсит сайт sbis.ru по инн организаций из файла
+    парсит сайт sbis.ru по инн организаций
+    из переменной organizations
     :param organizations: объект класса pandas.DataFrame, содержащий
     информацию об организациях, в т.ч. их инн
     :return: словарь с контактными данными организаций(телефоны, email, сайт)
