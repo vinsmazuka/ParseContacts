@@ -1,7 +1,7 @@
+import time
 from bs4 import BeautifulSoup
 import pandas
 import requests
-import time
 
 
 class Parser:
