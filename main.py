@@ -143,28 +143,21 @@ def excheck_pro_handler(organizations):
     found_sites = []
     counter = 0
     for inn in list(organizations['ИНН']):
-        try:
-            response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
-        except requests.exceptions.ConnectionError:
-            print('Произошла ошибка соединения, ожидайте')
-            time.sleep(10)
-            response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
-            print('Соединение было восстановлено')
-            new_soup = BeautifulSoup(response.text, 'html.parser')
-            parsing_results = Parser.parse_excheck_pro(soup=new_soup)
-            found_telephones.append(parsing_results['telephones'])
-            found_emails.append(parsing_results['email'])
-            found_sites.append(parsing_results['site'])
-            counter += 1
-            print(f'количество обработанных строк: {counter}')
-        else:
-            new_soup = BeautifulSoup(response.text, 'html.parser')
-            parsing_results = Parser.parse_excheck_pro(soup=new_soup)
-            found_telephones.append(parsing_results['telephones'])
-            found_emails.append(parsing_results['email'])
-            found_sites.append(parsing_results['site'])
-            counter += 1
-            print(f'количество обработанных строк: {counter}')
+        while True:
+            try:
+                response = requests.get(f'https://excheck.pro/company/{inn}/contacts')
+            except requests.exceptions.ConnectionError:
+                print('запрос не прошел, попробуем снова')
+                time.sleep(10)
+            else:
+                new_soup = BeautifulSoup(response.text, 'html.parser')
+                parsing_results = Parser.parse_excheck_pro(soup=new_soup)
+                found_telephones.append(parsing_results['telephones'])
+                found_emails.append(parsing_results['email'])
+                found_sites.append(parsing_results['site'])
+                counter += 1
+                print(f'количество обработанных строк: {counter}')
+                break
     result = {
         'found_telephones': found_telephones,
         'found_emails': found_emails,
@@ -235,7 +228,7 @@ def sbis_ru_handler(organizations):
             try:
                 response = requests.get(f'https://sbis.ru/contragents/{inn}')
             except requests.exceptions.ConnectionError:
-                print('запрос не прошел')
+                print('запрос не прошел, попробуем снова')
                 time.sleep(10)
             else:
                 soup = BeautifulSoup(response.text, 'html.parser')
@@ -254,8 +247,10 @@ def sbis_ru_handler(organizations):
     return result
 
 
+start_program = excel_handler(excheck_pro_handler, 'organizations.xlsx')
+
 if __name__ == "__main__":
-    excel_handler(sbis_ru_handler, 'empty_values.xlsx')()
+    start_program()
 
 
 
