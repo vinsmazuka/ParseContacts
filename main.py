@@ -110,14 +110,16 @@ def excel_handler(func_to_deco, path):
             """
             записывает данные в файл эксель
             """
-            try:
-                organizations.to_excel(path)
-                print('Данные были записаны в файл')
-            except PermissionError:
-                print('Данные не были записаны, так как файл был открыт '
-                      'закроте файл')
-                time.sleep(20)
-                return write()
+            while True:
+                try:
+                    organizations.to_excel(path)
+                    print('Данные были записаны в файл')
+                    break
+                except PermissionError:
+                    print('Данные не были записаны, так как файл был открыт '
+                          'закроте файл')
+                    time.sleep(20)
+                    return write()
         organizations = pandas.read_excel(path)
         result = func_to_deco(organizations)
         organizations['telephone'] = result['found_telephones']
@@ -178,32 +180,27 @@ def find_org_com_handler(organizations):
     found_sites = []
     counter = 0
     for inn in list(organizations['ИНН']):
-        try:
-            response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
-            soup = BeautifulSoup(response.text, 'html.parser')
-            link = 'https://www.find-org.com/' + soup.p.a.get('href')
-        except AttributeError:
-            print('Сайт прервал обработку, необходимо зайти на сайт и ввести '
-                  'капчу,\nпосле ввода капчи обработка продолжится')
-            time.sleep(40)
-            response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
-            soup = BeautifulSoup(response.text, 'html.parser')
-            link = 'https://www.find-org.com/' + soup.p.a.get('href')
-            new_response = requests.get(link)
-            new_soup = BeautifulSoup(new_response.text, 'html.parser')
-            parsing_results = Parser.parse_find_org_com(soup=new_soup)
-            found_telephones.append(parsing_results['telephones'])
-            found_sites.append(parsing_results['site'])
-            counter += 1
-            print(f'количество обработанных строк: {counter}')
-        else:
-            new_response = requests.get(link)
-            new_soup = BeautifulSoup(new_response.text, 'html.parser')
-            parsing_results = Parser.parse_find_org_com(soup=new_soup)
-            found_telephones.append(parsing_results['telephones'])
-            found_sites.append(parsing_results['site'])
-            counter += 1
-            print(f'количество обработанных строк: {counter}')
+        while True:
+            try:
+                response = requests.get(f'https://www.find-org.com/search/inn/?val={inn}')
+                soup = BeautifulSoup(response.text, 'html.parser')
+                link = 'https://www.find-org.com/' + soup.p.a.get('href')
+            except requests.exceptions.ConnectionError:
+                print('запрос не прошел, попробуем снова')
+                time.sleep(10)
+            except AttributeError:
+                print('Сайт прервал обработку, необходимо зайти на сайт и ввести '
+                      'капчу,\nпосле ввода капчи обработка продолжится')
+                time.sleep(30)
+            else:
+                new_response = requests.get(link)
+                new_soup = BeautifulSoup(new_response.text, 'html.parser')
+                parsing_results = Parser.parse_find_org_com(soup=new_soup)
+                found_telephones.append(parsing_results['telephones'])
+                found_sites.append(parsing_results['site'])
+                counter += 1
+                print(f'количество обработанных строк: {counter}')
+                break
     result = {
         'found_telephones': found_telephones,
         'found_sites': found_sites
