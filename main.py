@@ -116,7 +116,7 @@ def excel_handler(func_to_deco, path):
             except PermissionError:
                 print('Данные не были записаны, так как файл был открыт '
                       'закроте файл')
-                time.sleep(5)
+                time.sleep(20)
                 return write()
         organizations = pandas.read_excel(path)
         result = func_to_deco(organizations)
