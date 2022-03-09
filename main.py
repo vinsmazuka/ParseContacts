@@ -110,16 +110,14 @@ def excel_handler(func_to_deco, path):
             """
             записывает данные в файл эксель
             """
-            while True:
-                try:
-                    organizations.to_excel(path)
-                    print('Данные были записаны в файл')
-                    break
-                except PermissionError:
-                    print('Данные не были записаны, так как файл был открыт '
-                          'закроте файл')
-                    time.sleep(20)
-                    return write()
+            try:
+                organizations.to_excel(path)
+                print('Данные были записаны в файл')
+            except PermissionError:
+                print('Данные не были записаны, так как файл был открыт '
+                      'закроте файл')
+                time.sleep(20)
+                return write()
         organizations = pandas.read_excel(path)
         result = func_to_deco(organizations)
         organizations['telephone'] = result['found_telephones']
